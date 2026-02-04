@@ -3,33 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lishborn - AI Insult Generator</title>
-    
-    <!-- Load Tailwind CSS -->
+    <title>Lishborn - Ultimate Insult Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Load React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Load Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
     <style>
-        body {
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            background-color: #101010;
-        }
-        @keyframes bounce-slow {
-            0%, 100% { transform: scale(1.25) translateY(0); }
-            50% { transform: scale(1.25) translateY(-5px); }
-        }
-        .animate-bounce-slow {
-            animation: bounce-slow 3s infinite;
-        }
-        .input-cursor {
-            caret-color: #ef4444;
-        }
+        body { font-family: 'Menlo', 'Monaco', 'Courier New', monospace; background-color: #101010; }
+        @keyframes bounce-slow { 0%, 100% { transform: scale(1.25) translateY(0); } 50% { transform: scale(1.25) translateY(-5px); } }
+        .animate-bounce-slow { animation: bounce-slow 3s infinite; }
+        .input-cursor { caret-color: #ef4444; }
     </style>
 </head>
 <body>
@@ -38,31 +21,40 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- ส่วนประกอบของ AI จำลอง (Template AI) ---
-        const SUBJECTS = ["กกต.", "ระบบเลือกตั้ง", "คนนับคะแนน", "งบประมาณ", "ความโปร่งใส", "เครื่องคิดเลข", "บัตรเลือกตั้ง", "ระบบรายงานผล", "เซิร์ฟเวอร์"];
-        const VERBS = ["หายไปไหนหมด", "ทำงานเหมือนเต่า", "แดกงบไปเท่าไหร่", "คำนวณมั่วซั่ว", "พังพินาศ", "ส้นตีนมาก", "ห่วยแตก", "ไร้ประสิทธิภาพ", "ล่มเก่งเหลือเกิน"];
-        const ENDINGS = ["ครับพี่น้อง", "ให้ตายเถอะ", "ไม่อายฟ้าดิน", "จริงๆ นะจ๊ะ", "เอาสมองส่วนไหนคิด", "ควยยย", "ไอ้เวร", "ชิบหาย"];
-
-        // --- คำด่าตั้งต้น ---
-        const INITIAL_RESPONSES = [
-            "ออกแบบให้แย่ยังไงก็ได้เพราะยังไงก็ไม่แย่กว่าแม่มแล้ว",
-            "ระบบล่มเก่งกว่าระบบทำงานอีกครับ",
-            "งบประมาณพันล้าน ได้งานหลักร้อย",
-            "บัตรเขย่งหรือคนเขย่งครับเนี่ย",
-            "ขอเครื่องคิดเลขใหม่ไหมครับ?",
-            "Loading 99%... (ค้างมา 4 ปีแล้ว)",
-            "Error 404: Transparency Not Found",
-            "ต้องใช้ AI ช่วยทำงาน หรือต้องใช้คนมี I ทำงานครับ?",
-            "กกต.หน้าหี", "กกต.หัวควย", "ไอเหี้ย กกต.", "กกต.ส้นตีน", "กกต.จัญไร"
+        // --- คลังคำศัพท์ V3 (ผสมได้กว่า 160,000+ แบบ) ---
+        const SUBJECTS = [
+            "กกต.", "7 เสือ", "คณะกรรมการฯ", "คนจัดเลือกตั้ง", "ระบบรายงานผล", 
+            "งบ 6 พันล้าน", "บัตรเลือกตั้ง", "ความโปร่งใส", "คนนับคะแนน", 
+            "เครื่องคิดเลข", "เซิร์ฟเวอร์", "ผู้มีอำนาจ", "ตรรกะพวกคุณ", 
+            "การทำงานของท่าน", "ระเบียบการเลือกตั้ง", "บัตรเขย่ง", "ผลคะแนน", 
+            "สมองคนคิด", "ภาษีประชาชน", "ความรับผิดชอบ"
+        ];
+        const VERBS = [
+            "หายไปไหนหมด", "ทำงานเหมือนเต่า", "แดกงบไปเท่าไหร่", "คำนวณมั่วซั่ว", 
+            "พังพินาศ", "หมาไม่แดก", "ล่มเก่งเหลือเกิน", "พักผ่อนอยู่เหรอ", 
+            "ดูงานเมืองนอก", "ไร้ประสิทธิภาพ", "หน้าด้านจริงๆ", "ทำอะไรกันอยู่", 
+            "โกงหน้าด้านๆ", "ปัดความรับผิดชอบ", "คิดเลขไม่เป็น", "ซ่อนคะแนน", 
+            "หน่วงความเจริญ", "ถ่วงเวลา", "ไม่เห็นหัวประชาชน", "ทำงานชุ่ยๆ"
+        ];
+        const OBJECTS = [
+            "ครับท่าน", "จนน่าเกลียด", "แบบงงๆ", "ยับเยิน", "ชิบหายวายปวง", 
+            "จนกูงง", "ไม่อายฟ้าดิน", "ให้เด็กอนุบาลทำยังดีกว่า", "เสียดายภาษี", 
+            "น่าสมเพช", "เละเทะไปหมด", "ทุเรศลูกตา", "เกินเยียวยา", 
+            "แบบไร้ยางอาย", "เห็นแล้วท้อ", "มืดมนอนธการ", "ต่ำตม", 
+            "หาความเจริญไม่เจอ", "เน่าเฟะ", "อัปยศอดสู"
+        ];
+        const ENDINGS = [
+            "ไอ้สัส", "ไอ้เวร", "ควยยย", "ถุย", "ลาออกไปเถอะ", "ถามจริ๊ง?", 
+            "เลิกตอแหลได้แล้ว", "เอาตีนคิดเหรอ", "จริงๆ นะจ๊ะ", "ส้นตีนมาก", 
+            "เหนื่อยใจว่ะ", "ขอร้องล่ะ", "จบนะ", "อย่าแถ", "จำใส่สมองไว้", 
+            "ประชาชนดูอยู่", "บาปกรรมมีจริง", "อายหมามันบ้าง", "ไอ้หน้าไม่อาย", "สาสสส"
         ];
 
         const PixelGhost = () => (
-            <svg width="64" height="64" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-500">
+            <svg width="64" height="64" viewBox="0 0 14 14" fill="none" className="text-red-500">
                 <path d="M4 2H10V3H11V4H12V9H11V10H10V11H9V10H8V9H6V10H5V11H4V10H3V9H2V4H3V3H4V2Z" fill="currentColor"/>
-                <rect x="4" y="5" width="2" height="2" fill="black"/>
-                <rect x="8" y="5" width="2" height="2" fill="black"/>
-                <rect x="4" y="6" width="1" height="1" fill="white"/>
-                <rect x="8" y="6" width="1" height="1" fill="white"/>
+                <rect x="4" y="5" width="2" height="2" fill="black"/><rect x="8" y="5" width="2" height="2" fill="black"/>
+                <rect x="4" y="6" width="1" height="1" fill="white"/><rect x="8" y="6" width="1" height="1" fill="white"/>
             </svg>
         );
 
@@ -70,48 +62,44 @@
             const [displayedText, setDisplayedText] = useState("");
             const [isTyping, setIsTyping] = useState(false);
             const [cursorVisible, setCursorVisible] = useState(true);
+            const [autoLoop, setAutoLoop] = useState(false);
+            const [history, setHistory] = useState([]);
             
-            // ใช้ Ref เก็บ Interval เพื่อความแม่นยำในการสั่งหยุด/เริ่ม
-            const typingIntervalRef = useRef(null);
-            
-            // โหมดเพิ่มคำด่าเอง
+            // ส่วนเพิ่มคำเอง
             const [inputMode, setInputMode] = useState(false);
+            const [customPhrases, setCustomPhrases] = useState([]);
             const [customInput, setCustomInput] = useState("");
-            const [allResponses, setAllResponses] = useState(INITIAL_RESPONSES);
             const inputRef = useRef(null);
 
-            // ฟังก์ชัน AI ผสมคำ (Creative Mode)
-            const generateCreativeInsult = () => {
-                const subj = SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
-                const verb = VERBS[Math.floor(Math.random() * VERBS.length)];
-                const end = ENDINGS[Math.floor(Math.random() * ENDINGS.length)];
-                return Math.random() > 0.3 ? `${subj} ${verb} ${end}` : `${subj} ${verb}`;
-            };
-            
-            const generateNewInsult = () => {
-                // ถ้าอยู่ในโหมด Input ไม่ต้องทำอะไร
-                if (inputMode) return;
-                
-                // สั่งเคลียร์ Interval เก่าทิ้งก่อนเสมอ เพื่อป้องกันตัวอักษรตีกัน
-                if (typingIntervalRef.current) {
-                    clearInterval(typingIntervalRef.current);
+            const typingIntervalRef = useRef(null);
+            const autoLoopRef = useRef(null);
+
+            // ฟังก์ชันสุ่มประโยค (รวม logic ผสมคำ + คำที่ผู้ใช้เพิ่ม)
+            const generateText = () => {
+                // 30% โอกาสที่จะเลือกคำจากที่ผู้ใช้พิมพ์เพิ่ม (ถ้ามี)
+                if (customPhrases.length > 0 && Math.random() < 0.3) {
+                    return customPhrases[Math.floor(Math.random() * customPhrases.length)];
                 }
 
+                // 70% (หรือถ้าไม่มีคำเพิ่ม) ให้ AI ผสมคำเอง
+                const s = SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
+                const v = VERBS[Math.floor(Math.random() * VERBS.length)];
+                const o = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
+                const e = Math.random() > 0.5 ? " " + ENDINGS[Math.floor(Math.random() * ENDINGS.length)] : "";
+                
+                return `${s} ${v} ${o}${e}`;
+            };
+
+            const startTyping = () => {
+                if (inputMode) return;
+                if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+                
                 setIsTyping(true);
-                setDisplayedText(""); // เคลียร์ข้อความหน้าจอ
+                setDisplayedText(""); 
                 
-                // สุ่มคำ
-                let targetText;
-                if (Math.random() > 0.5) {
-                    const randomIndex = Math.floor(Math.random() * allResponses.length);
-                    targetText = allResponses[randomIndex];
-                } else {
-                    targetText = generateCreativeInsult();
-                }
-                
-                // เริ่มพิมพ์
+                const targetText = generateText();
                 let charIndex = 0;
-                let currentString = ""; // ใช้ตัวแปร Local สะสมค่าแทน State เพื่อความแม่นยำ
+                let currentString = "";
 
                 typingIntervalRef.current = setInterval(() => {
                     if (charIndex < targetText.length) {
@@ -121,92 +109,100 @@
                     } else {
                         clearInterval(typingIntervalRef.current);
                         setIsTyping(false);
+                        setHistory(prev => [targetText, ...prev].slice(0, 50));
+
+                        if (autoLoopRef.current && !inputMode) {
+                            setTimeout(() => {
+                                if (autoLoopRef.current && !inputMode) startTyping();
+                            }, 2000); // พัก 2 วิแล้วด่าต่อ
+                        }
                     }
-                }, 40);
+                }, 30); 
             };
 
-            const handleAddCustomInsult = (e) => {
+            const toggleAutoLoop = (e) => {
+                e.stopPropagation();
+                if (inputMode) return;
+                const newState = !autoLoop;
+                setAutoLoop(newState);
+                autoLoopRef.current = newState;
+                if (newState && !isTyping) startTyping();
+            };
+
+            const handleAddCustom = (e) => {
                 e.preventDefault();
                 if (customInput.trim()) {
-                    setAllResponses(prev => [...prev, customInput]);
-                    setDisplayedText(`> เพิ่มคำด่า: "${customInput}" เข้าสู่ระบบแล้ว`);
+                    setCustomPhrases(prev => [...prev, customInput]);
+                    setDisplayedText(`> System Update: Added "${customInput}" to database.`);
                     setCustomInput("");
                     setInputMode(false);
+                    // ปิด Auto Loop ชั่วคราวเพื่อให้เห็นข้อความยืนยัน
+                    if(autoLoop) {
+                        setTimeout(() => { if(autoLoopRef.current) startTyping(); }, 2500);
+                    }
                 }
             };
 
             useEffect(() => {
                 const interval = setInterval(() => setCursorVisible(v => !v), 530);
+                setTimeout(() => startTyping(), 200);
                 return () => clearInterval(interval);
             }, []);
 
-            // เริ่มทำงานครั้งแรก
             useEffect(() => {
-                // รอให้หน้าเว็บโหลด UI เสร็จก่อนนิดนึงค่อยเริ่มพิมพ์ (100ms) กันพลาด
-                const timeout = setTimeout(() => {
-                    generateNewInsult();
-                }, 100);
-                return () => clearTimeout(timeout);
-            }, []);
-
-            useEffect(() => {
-                if (inputMode && inputRef.current) {
-                    inputRef.current.focus();
-                }
+                if (inputMode && inputRef.current) inputRef.current.focus();
             }, [inputMode]);
 
             return (
-                <div className="min-h-screen text-gray-300 flex items-center justify-center p-4 selection:bg-gray-700 selection:text-white"
-                     onClick={!inputMode ? generateNewInsult : undefined}>
+                <div className="min-h-screen text-gray-300 flex items-center justify-center p-4"
+                     onClick={() => !isTyping && !inputMode && startTyping()}>
                     <div className="w-full max-w-2xl">
                         
-                        {/* Main Red Box */}
-                        <div className={`relative border rounded-xl pt-16 pb-12 px-8 flex flex-col items-center justify-center gap-6 bg-[#101010] transition-colors duration-300 ${inputMode ? 'border-yellow-500/60' : 'border-red-500/40 hover:border-red-500/60 cursor-pointer'}`}>
+                        {/* Header Box */}
+                        <div className={`relative border rounded-xl pt-16 pb-12 px-8 flex flex-col items-center justify-center gap-6 bg-[#101010] transition-all duration-300 ${inputMode ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : (autoLoop ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-red-500/40')}`}>
                             
                             <div className="absolute -top-3 left-8 px-2 bg-[#101010]">
-                                <span className={`${inputMode ? 'text-yellow-500' : 'text-red-400/80'} text-sm tracking-wide transition-colors`}>
-                                    {inputMode ? 'Lishborn : Input Mode' : 'Lishborn'}
+                                <span className={`${inputMode ? 'text-yellow-500' : 'text-red-400/80'} text-sm tracking-wide`}>
+                                    {inputMode ? 'Lishborn : Input Mode' : 'Lishborn System V4'}
                                 </span>
                             </div>
 
                             <h1 className="text-xl text-gray-200 font-bold tracking-tight">
-                                {inputMode ? 'Enter Custom Data' : 'Welcome back'}
+                                {inputMode ? 'Override Protocol' : (autoLoop ? '🔥 RAMPAGE MODE 🔥' : 'Welcome back')}
                             </h1>
 
-                            <div className="transform scale-125 my-2 animate-bounce-slow">
+                            <div className={`transform scale-125 my-2 ${autoLoop && !inputMode ? 'animate-pulse' : 'animate-bounce-slow'}`}>
                                 <PixelGhost />
                             </div>
 
                             <div className="text-center space-y-1">
-                                <p className="text-gray-400 font-medium">Opus 4.5</p>
+                                <p className="text-gray-400 font-medium">Opus 4.5 Ultimate</p>
                                 <p className="text-gray-500 text-sm">
-                                    {inputMode ? 'Waiting for user input...' : 'API Usage Billing'}
+                                    {inputMode ? 'Waiting for manual input...' : `Database: 160,000+ | Custom: ${customPhrases.length}`}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Terminal Input Area */}
+                        {/* Terminal Area */}
                         <div className="mt-10 px-2 space-y-3">
-                            <div className="text-gray-500 text-sm mb-4">Welcome to Lishborn System</div>
+                            <div className="text-gray-500 text-sm mb-4">Targeting System: Active</div>
                             <div className="h-px w-full bg-gray-800 mb-4"></div>
 
-                            {/* Command Line */}
                             <div className="flex items-center gap-3 text-lg">
                                 <span className={`${inputMode ? 'text-yellow-500' : 'text-gray-500'} font-bold`}>❯</span>
                                 <span className="text-gray-200">
-                                    {inputMode ? 'เพิ่มข้อมูลลงฐานระบบ:' : 'สร้างระบบด่ากกต.อัตโนมัติ'}
+                                    {inputMode ? 'เพิ่มข้อมูลคำด่า:' : 'สร้างระบบด่ากกต.อัตโนมัติ'}
                                 </span>
                             </div>
 
-                            {/* Output / Input Area */}
-                            <div className="text-lg text-gray-400 pl-6 relative min-h-[30px]">
+                            <div className="text-lg text-red-400 font-medium pl-6 relative min-h-[30px]">
                                 {inputMode ? (
-                                    <form onSubmit={handleAddCustomInsult} className="flex items-center">
+                                    <form onSubmit={handleAddCustom} className="flex items-center">
                                         <input 
                                             ref={inputRef}
                                             type="text" 
                                             className="bg-transparent border-none outline-none text-yellow-100 w-full placeholder-gray-600 input-cursor"
-                                            placeholder="พิมพ์คำด่าที่นี่ แล้วกด Enter..."
+                                            placeholder="พิมพ์ข้อความที่นี่..."
                                             value={customInput}
                                             onChange={(e) => setCustomInput(e.target.value)}
                                             onBlur={() => { if(!customInput) setInputMode(false); }}
@@ -214,27 +210,43 @@
                                     </form>
                                 ) : (
                                     <>
-                                        <span className={`inline-block w-2.5 h-6 bg-gray-400 align-middle mr-1 transition-opacity ${cursorVisible || isTyping ? 'opacity-100' : 'opacity-0'}`}></span>
+                                        <span className={`inline-block w-2.5 h-6 ${inputMode ? 'bg-yellow-500' : 'bg-red-500'} align-middle mr-1 transition-opacity ${cursorVisible ? 'opacity-100' : 'opacity-0'}`}></span>
                                         <span>{displayedText}</span>
                                     </>
                                 )}
                             </div>
+
+                            {/* History Log */}
+                            {!inputMode && (
+                                <div className="pl-8 pt-4 space-y-2 opacity-50 text-sm font-mono text-gray-600">
+                                    {history.slice(0, 2).map((item, idx) => (
+                                        <div key={idx}>$ {item}</div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        {/* Footer Controls */}
+                        {/* Controls */}
                         <div className="mt-16 px-2 flex flex-col items-center gap-4 text-xs font-medium opacity-70">
                             
-                            {/* ปุ่มสำหรับเปิดโหมดเพิ่มคำ */}
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setInputMode(true); }}
-                                className="px-4 py-2 border border-gray-700 rounded hover:bg-gray-800 hover:text-white transition-colors text-cyan-600/80"
-                            >
-                                [ + เพิ่มคำด่าด้วยตัวเอง ]
-                            </button>
+                            <div className="flex gap-3">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setInputMode(true); setAutoLoop(false); autoLoopRef.current = false; }}
+                                    className="px-4 py-2 border border-gray-700 rounded hover:bg-gray-800 hover:text-white transition-colors text-cyan-600/80"
+                                >
+                                    [ + เพิ่มคำด่าเอง ]
+                                </button>
 
-                            <div className="flex items-center gap-2 text-cyan-600/60">
-                                <span>❚❚</span>
-                                <span>(Click box to randomize) • AI Creative Mode Active</span>
+                                <button 
+                                    onClick={toggleAutoLoop}
+                                    className={`px-4 py-2 border rounded transition-all ${autoLoop ? 'bg-red-900/30 border-red-500 text-red-400' : 'border-gray-700 hover:bg-gray-800 text-cyan-600/80'}`}
+                                >
+                                    {autoLoop ? '[ ⏹ STOP AUTO ]' : '[ ▶ START AUTO ]'}
+                                </button>
+                            </div>
+
+                            <div className="text-cyan-600/60">
+                                (Click anywhere for single shot)
                             </div>
                         </div>
 
