@@ -39,9 +39,9 @@
         const { useState, useEffect, useRef } = React;
 
         // --- ส่วนประกอบของ AI จำลอง (Template AI) ---
-        const SUBJECTS = ["กกต.", "ระบบเลือกตั้ง", "คนนับคะแนน", "งบประมาณ", "ความโปร่งใส", "เครื่องคิดเลข", "บัตรเลือกตั้ง"];
-        const VERBS = ["หายไปไหนหมด", "ทำงานเหมือนเต่า", "แดกงบไปเท่าไหร่", "คำนวณมั่วซั่ว", "พังพินาศ", "ส้นตีนมาก", "ห่วยแตก", "ไร้ประสิทธิภาพ"];
-        const ENDINGS = ["ครับพี่น้อง", "ให้ตายเถอะ", "ไม่อายฟ้าดิน", "จริงๆ นะจ๊ะ", "เอาสมองส่วนไหนคิด", "ควยยย", "ไอ้เวร"];
+        const SUBJECTS = ["กกต.", "ระบบเลือกตั้ง", "คนนับคะแนน", "งบประมาณ", "ความโปร่งใส", "เครื่องคิดเลข", "บัตรเลือกตั้ง", "ระบบรายงานผล", "เซิร์ฟเวอร์"];
+        const VERBS = ["หายไปไหนหมด", "ทำงานเหมือนเต่า", "แดกงบไปเท่าไหร่", "คำนวณมั่วซั่ว", "พังพินาศ", "ส้นตีนมาก", "ห่วยแตก", "ไร้ประสิทธิภาพ", "ล่มเก่งเหลือเกิน"];
+        const ENDINGS = ["ครับพี่น้อง", "ให้ตายเถอะ", "ไม่อายฟ้าดิน", "จริงๆ นะจ๊ะ", "เอาสมองส่วนไหนคิด", "ควยยย", "ไอ้เวร", "ชิบหาย"];
 
         // --- คำด่าตั้งต้น ---
         const INITIAL_RESPONSES = [
@@ -71,6 +71,9 @@
             const [isTyping, setIsTyping] = useState(false);
             const [cursorVisible, setCursorVisible] = useState(true);
             
+            // ใช้ Ref เก็บ Interval เพื่อความแม่นยำในการสั่งหยุด/เริ่ม
+            const typingIntervalRef = useRef(null);
+            
             // โหมดเพิ่มคำด่าเอง
             const [inputMode, setInputMode] = useState(false);
             const [customInput, setCustomInput] = useState("");
@@ -82,34 +85,41 @@
                 const subj = SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
                 const verb = VERBS[Math.floor(Math.random() * VERBS.length)];
                 const end = ENDINGS[Math.floor(Math.random() * ENDINGS.length)];
-                // 30% ที่จะเติมคำลงท้าย
                 return Math.random() > 0.3 ? `${subj} ${verb} ${end}` : `${subj} ${verb}`;
             };
             
             const generateNewInsult = () => {
-                if (isTyping || inputMode) return;
+                // ถ้าอยู่ในโหมด Input ไม่ต้องทำอะไร
+                if (inputMode) return;
                 
+                // สั่งเคลียร์ Interval เก่าทิ้งก่อนเสมอ เพื่อป้องกันตัวอักษรตีกัน
+                if (typingIntervalRef.current) {
+                    clearInterval(typingIntervalRef.current);
+                }
+
                 setIsTyping(true);
-                setDisplayedText("");
+                setDisplayedText(""); // เคลียร์ข้อความหน้าจอ
                 
-                // สุ่มว่าจะเอาคำตายตัว หรือ ให้ AI ผสมคำใหม่ (50/50)
+                // สุ่มคำ
                 let targetText;
                 if (Math.random() > 0.5) {
-                    // โหมดดึงจากคลัง (รวมที่userพิมพ์เพิ่ม)
                     const randomIndex = Math.floor(Math.random() * allResponses.length);
                     targetText = allResponses[randomIndex];
                 } else {
-                    // โหมด AI ผสมคำใหม่
                     targetText = generateCreativeInsult();
                 }
                 
+                // เริ่มพิมพ์
                 let charIndex = 0;
-                const typingInterval = setInterval(() => {
+                let currentString = ""; // ใช้ตัวแปร Local สะสมค่าแทน State เพื่อความแม่นยำ
+
+                typingIntervalRef.current = setInterval(() => {
                     if (charIndex < targetText.length) {
-                        setDisplayedText((prev) => prev + targetText.charAt(charIndex));
+                        currentString += targetText.charAt(charIndex);
+                        setDisplayedText(currentString);
                         charIndex++;
                     } else {
-                        clearInterval(typingInterval);
+                        clearInterval(typingIntervalRef.current);
                         setIsTyping(false);
                     }
                 }, 40);
@@ -130,8 +140,13 @@
                 return () => clearInterval(interval);
             }, []);
 
+            // เริ่มทำงานครั้งแรก
             useEffect(() => {
-                generateNewInsult();
+                // รอให้หน้าเว็บโหลด UI เสร็จก่อนนิดนึงค่อยเริ่มพิมพ์ (100ms) กันพลาด
+                const timeout = setTimeout(() => {
+                    generateNewInsult();
+                }, 100);
+                return () => clearTimeout(timeout);
             }, []);
 
             useEffect(() => {
