@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบด่า กกต. - V20 Balanced</title>
+    <title>ระบบด่า กกต. </title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -33,7 +33,6 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(100, 200, 255, 0.15);
             box-shadow: 0 0 50px rgba(0, 150, 255, 0.1);
-            transition: all 0.3s ease;
         }
 
         .neon-text {
@@ -130,36 +129,23 @@
             const autoLoopRef = useRef(null);
             const historyRef = useRef([]);
 
-            // --- ส่วนที่แก้: ปรับ Logic การสุ่มใหม่ตามที่ขอ ---
             const generateText = () => {
                 let text = "";
                 let attempts = 0;
-                
-                // พยายามสุ่มใหม่ 15 ครั้งเพื่อหาคำที่ไม่ซ้ำกับประวัติล่าสุด
                 while(attempts < 15) {
                     const rand = Math.random();
-                    
-                    // 30% โอกาสออกคำที่พิมพ์เอง (ถ้ามี)
                     if (customPhrases.length > 0 && rand < 0.3) {
                         text = customPhrases[Math.floor(Math.random() * customPhrases.length)];
-                    } 
-                    // 20% โอกาสออกคำ Preset
-                    else if (rand < 0.5) { 
+                    } else if (rand < 0.5) { 
                         text = PRESET_PHRASES[Math.floor(Math.random() * PRESET_PHRASES.length)];
-                    } 
-                    // 50% โอกาสออกคำผสมใหม่ (Infinite) - เน้นอันนี้ที่สุด
-                    else { 
+                    } else { 
                         const s = SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
                         const v = VERBS[Math.floor(Math.random() * VERBS.length)];
                         const o = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
                         const e = Math.random() > 0.5 ? " " + ENDINGS[Math.floor(Math.random() * ENDINGS.length)] : "";
                         text = `${s} ${v} ${o}${e}`;
                     }
-                    
-                    // Anti-Repeat Check: ถ้าคำนี้เคยออกไปแล้วใน 20 คำล่าสุด ให้สุ่มใหม่
-                    if (!historyRef.current.includes(text)) {
-                        break; 
-                    }
+                    if (!historyRef.current.includes(text)) { break; }
                     attempts++;
                 }
                 return text;
@@ -253,25 +239,33 @@
                             )}
                         </div>
 
-                        {/* --- CONTROLS AREA --- */}
+                        {/* --- CONTROLS AREA (แก้บั๊กปุ่มทับกัน) --- */}
                         <div className="w-full grid grid-cols-2 gap-3 mb-6 flex-shrink-0">
                             {inputMode ? (
                                 <>
-                                    <button onClick={handleAddCustom} className="py-3 bg-green-600 border border-green-400 rounded-xl text-white font-['Kanit'] font-bold text-lg uppercase tracking-wide shadow-[0_0_15px_rgba(0,255,0,0.4)] flex items-center justify-center gap-2">
+                                    <button onClick={handleAddCustom} className="py-3 bg-green-600 border border-green-400 rounded-xl text-white font-['Kanit'] font-bold text-lg uppercase tracking-wide shadow-[0_0_15px_rgba(0,255,0,0.4)] flex items-center justify-center gap-2 whitespace-nowrap hover:scale-105 transition-transform">
                                         <SaveIcon /> บันทึก
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); setInputMode(false); setCustomInput(""); }} className="py-3 bg-red-900/50 border border-red-500 rounded-xl text-red-300 font-['Kanit'] font-bold text-lg uppercase tracking-wide flex items-center justify-center gap-2">
+                                    <button onClick={(e) => { e.stopPropagation(); setInputMode(false); setCustomInput(""); }} className="py-3 bg-red-900/50 border border-red-500 rounded-xl text-red-300 font-['Kanit'] font-bold text-lg uppercase tracking-wide flex items-center justify-center gap-2 whitespace-nowrap hover:scale-105 transition-transform">
                                         <CancelIcon /> ยกเลิก
                                     </button>
                                 </>
                             ) : (
                                 <>
-                                    <button onClick={(e) => { e.stopPropagation(); setInputMode(true); setAutoLoop(false); setWarpSpeed(2); }} className="py-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-cyan-300 hover:bg-cyan-500 hover:text-black hover:border-cyan-400 transition-all font-['Kanit'] font-bold text-sm md:text-base uppercase tracking-wide shadow-[0_0_15px_rgba(0,200,255,0.1)]">
+                                    <button onClick={(e) => { e.stopPropagation(); setInputMode(true); setAutoLoop(false); setWarpSpeed(2); }} className="py-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-cyan-300 hover:bg-cyan-500 hover:text-black hover:border-cyan-400 transition-colors font-['Kanit'] font-bold text-sm md:text-base uppercase tracking-wide shadow-[0_0_15px_rgba(0,200,255,0.1)] whitespace-nowrap">
                                         + เพิ่มคำด่า
                                     </button>
-                                    <button onClick={toggleAutoLoop} className={`py-3 border rounded-xl font-['Kanit'] font-bold text-sm md:text-base uppercase tracking-wide transition-all ${autoLoop ? 'bg-red-500/20 border-red-500 text-red-200 shadow-[0_0_25px_rgba(255,50,50,0.4)] animate-pulse' : 'bg-cyan-950/40 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500 hover:text-black hover:border-cyan-400'}`}>
-                                        <div className="flex items-center justify-center gap-2">{autoLoop ? <StopIcon /> : <RocketIcon />}{autoLoop ? 'หยุดระบบ' : 'เริ่มด่ารัวๆ'}</div>
-                                    </button>
+                                    
+                                    {/* แยกปุ่มตามเงื่อนไข (Conditional Rendering) เพื่อแก้บั๊ก Text Overlap */}
+                                    {autoLoop ? (
+                                        <button onClick={toggleAutoLoop} className="py-3 border rounded-xl font-['Kanit'] font-bold text-sm md:text-base uppercase tracking-wide bg-red-500/20 border-red-500 text-red-200 shadow-[0_0_25px_rgba(255,50,50,0.4)] animate-pulse whitespace-nowrap flex items-center justify-center gap-2">
+                                            <StopIcon /> หยุดระบบ
+                                        </button>
+                                    ) : (
+                                        <button onClick={toggleAutoLoop} className="py-3 border rounded-xl font-['Kanit'] font-bold text-sm md:text-base uppercase tracking-wide bg-cyan-950/40 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500 hover:text-black hover:border-cyan-400 transition-colors whitespace-nowrap flex items-center justify-center gap-2">
+                                            <RocketIcon /> เริ่มด่ารัวๆ
+                                        </button>
+                                    )}
                                 </>
                             )}
                         </div>
